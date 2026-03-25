@@ -1,16 +1,239 @@
-# React + Vite
+# 🚀 Employee Shift Management System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack web application designed to automate employee scheduling, manage workforce efficiently, and reduce manual errors in shift planning.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 📌 Features
 
-## React Compiler
+### 👨‍💼 Admin Module
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+* Create, update, and delete users
+* Assign roles (Admin, Manager, Employee)
+* Monitor system activities
+* Manage system-level configurations
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 🧑‍💼 Employee Management
+
+* Add and manage employee records
+* Track employee availability
+* Assign employees to managers
+* Maintain employee work details
+
+---
+
+### 👤 User Management
+
+* Secure authentication (Login/Register)
+* Role-based access control (RBAC)
+* JWT-based authorization
+* Password encryption
+
+---
+
+### 📅 Shift Management
+
+* Create and manage shifts
+* Define shift timings (Morning, Evening, Night)
+* Assign employees to shifts
+* Avoid overlapping schedules
+
+---
+
+### 🤖 Auto Shift Scheduling
+
+* Automatically assign shifts based on:
+
+  * Availability
+  * Workload balance
+  * Role/skills
+* Ensures fair distribution of work
+
+---
+
+### 🔄 Shift Change System
+
+* Employees request shift change request
+* Manager approval/rejection
+* Automatic schedule updates
+
+---
+
+### 📝 Leave Management
+
+* Apply for leave
+* Manager approval workflow
+* Auto removal from assigned shifts
+* Real-time schedule update
+
+---
+
+### 📊 Dashboard & Analytics
+
+* Workload tracking
+* Overtime monitoring
+* Shift coverage insights
+* Understaffed alerts
+
+---
+
+### 🔔 Notifications
+
+* Shift updates
+* Leave approvals/rejections
+* Swap request updates
+
+---
+
+## 🎨 Frontend (React)
+
+### 🛠️ Tech Stack
+
+* React.js
+* Vite
+* Tailwind CSS
+* Axios
+
+---
+
+### 📂 Structure
+
+```
+frontend/
+│
+├── src/
+│   ├── components/
+│   ├── Pages/
+│   │   ├── Admin/
+│   │   ├── Employee/
+│   │   └── Manager/
+│   └── App.jsx
+```
+
+---
+
+### ⚙️ Setup
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Runs on: http://localhost:5173
+
+---
+
+### 🔗 API Connection
+
+Make sure backend is running on:
+
+```
+http://localhost:8080
+```
+
+---
+
+## ⚙️ Backend (Spring Boot)
+
+### 🛠️ Tech Stack
+
+* Java 17
+* Spring Boot
+* Spring Security
+* JPA / Hibernate
+* MySQL
+
+---
+
+### 📂 Structure
+
+```
+backend/
+│
+├── controller/
+├── service/
+├── repository/
+├── model/
+├── dto/
+├── exception/
+├── config/
+└── filters/
+```
+
+---
+
+### ⚙️ Setup
+
+#### Configure Database
+
+Update `application.properties`:
+
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/shift_db
+spring.datasource.username=root
+spring.datasource.password=your_password
+```
+
+---
+
+#### Run Backend
+
+```bash
+cd backend
+mvn spring-boot:run
+```
+
+Runs on: http://localhost:8080
+
+---
+
+### 🔗 API Modules
+
+* `/api/auth` → Authentication
+* `/api/users` → User Management
+* `/api/employees` → Employee Management
+* `/api/shifts` → Shift Management
+* `/api/leave` → Leave Requests
+* `/api/swap` → Shift Swap
+
+---
+
+## 🔐 Security
+
+* JWT-based authentication
+* Role-based authorization
+* Secure REST APIs
+
+---
+
+## 🚀 Future Enhancements
+
+* AI-based scheduling
+* Mobile app
+* Email/SMS notifications
+* Microservices architecture
+
+---
+
+## 📸 Screenshots
+
+(Add your UI screenshots here)
+
+---
+
+## 👨‍💻 Author
+
+Harshal Belgamwar
+
+LinkedIn: https://www.linkedin.com/in/harshal-belgamwar
+
+GitHub: https://github.com/Harshal-belgamwar
+
+---
+
+## ⭐ Support
+
+If you like this project, give it a ⭐ on GitHub!
