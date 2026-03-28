@@ -11,6 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import project.employeeshiftmanagement.DTO.EmployeeDTO.EmployeeDTO;
 import project.employeeshiftmanagement.DTO.EmployeeDTO.ManagerDTO;
+import project.employeeshiftmanagement.DTO.ErrorResponse;
 import project.employeeshiftmanagement.DTO.LeaveRequest.LeaveRequestDTO;
 import project.employeeshiftmanagement.DTO.LeaveRequest.ViewRequest;
 import project.employeeshiftmanagement.DTO.EmployeeDTO.ShiftPreferenceDTO;
@@ -18,6 +19,9 @@ import project.employeeshiftmanagement.DTO.ShiftAllocationDTO;
 import project.employeeshiftmanagement.DTO.SlotDTO;
 import project.employeeshiftmanagement.DTO.Users.NewPasswordDTO;
 import project.employeeshiftmanagement.DTO.ViewAllShiftRequest;
+import project.employeeshiftmanagement.Exception.EmployeeNotFound;
+import project.employeeshiftmanagement.Exception.ShiftNotFound;
+import project.employeeshiftmanagement.Exception.UserNotFound;
 import project.employeeshiftmanagement.Model.*;
 import project.employeeshiftmanagement.Model.ShiftPreference;
 import project.employeeshiftmanagement.Repository.*;
@@ -78,12 +82,12 @@ public class EmployeeService {
     private Employees getEmployeeByUsername(String username) {
 
         Users user = usersRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFound("User not found"));
 
         Employees employee = user.getEmployee();
 
         if (employee == null) {
-            throw new RuntimeException("Employee not linked to user");
+            throw new EmployeeNotFound("Employee not linked to user");
         }
 
         return employee;
@@ -108,10 +112,10 @@ public class EmployeeService {
     public ResponseEntity<?> changePassword(NewPasswordDTO dto, String username) {
 
         Users user = usersRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFound("User not found"));
 
         if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
-            return ResponseEntity.badRequest().body("Passwords do not match");
+            return new ResponseEntity<>(new ErrorResponse("new password and Confirm password do not match!",HttpStatus.BAD_REQUEST),HttpStatus.BAD_REQUEST);
         }
 
         user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
@@ -167,7 +171,7 @@ public class EmployeeService {
     public EmployeeDTO getEmployees(String username) {
 
         Users user = usersRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFound("User not found"));
 
         Employees employee = user.getEmployee();
 
@@ -193,12 +197,12 @@ public class EmployeeService {
     public ResponseEntity<?> shiftChangeRequest(String username, SlotDTO slotDTO) {
 
         Users user = usersRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFound("User not found"));
 
         Employees employee = user.getEmployee();
 
         Shifts shift = shiftsRepository.findByShiftName(slotDTO.getPreferredShift())
-                .orElseThrow(() -> new RuntimeException("Shift not found"));
+                .orElseThrow(() -> new ShiftNotFound("Shift not found"));
 
         SlotChangeRequest request = new SlotChangeRequest();
 
@@ -226,7 +230,7 @@ public class EmployeeService {
     }
 
     public List<ViewAllShiftRequest> viewAllShiftRequests(String username) {
-        Users user = usersRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
+        Users user = usersRepository.findByUsername(username).orElseThrow(() -> new UserNotFound("User not found"));
 
         List<SlotChangeRequest> request = slotChangeRepository.findByEmployee(user.getEmployee());
 
@@ -281,7 +285,7 @@ public class EmployeeService {
 
     public ShiftAllocationDTO getShiftAllocation(String username, LocalDate date) {
         Date convertedDate = java.sql.Date.valueOf(date);
-        Users user = usersRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
+        Users user = usersRepository.findByUsername(username).orElseThrow(() -> new UserNotFound("User not found"));
 
         List<ShiftAllocation> shiftAllocations = shiftAllocationRepository.findByAssignmentdate(convertedDate).stream().toList();
 
@@ -324,13 +328,6 @@ public class EmployeeService {
             dto.setEndTime(shiftAllocation1.getShift().getEnd_time());
             return dto;
         }
-
-
-
-
-
-
-
 
 
     }

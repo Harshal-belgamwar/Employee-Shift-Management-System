@@ -7,6 +7,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import project.employeeshiftmanagement.DTO.Users.UserDTO;
+import project.employeeshiftmanagement.Exception.InvalidUsernamepassword;
+import project.employeeshiftmanagement.Exception.UserNotFound;
 import project.employeeshiftmanagement.Model.Employees;
 import project.employeeshiftmanagement.Model.Users;
 import project.employeeshiftmanagement.Repository.EmployeeRepository;
@@ -61,7 +63,7 @@ public class UserService  {
         if(arr.isPresent()){
             usersRepository.deleteById(user_id);
         }else{
-            throw new UsernameNotFoundException("User not found");
+            throw new UserNotFound( "User not found");
         }
 
     }
@@ -75,10 +77,10 @@ public class UserService  {
             if(passwordEncoder.matches(userDTO.getPassword(),arr.get().getPassword())){
                 return modelMapper.map(arr.get(),UserDTO.class);
             }else{
-                throw new UsernameNotFoundException("Invalid username or password");
+                throw new InvalidUsernamepassword("Invalid username or password");
             }
         }else{
-            throw new UsernameNotFoundException("User not found");
+            throw new UserNotFound("User not found");
         }
 
     }

@@ -22,6 +22,7 @@ import project.employeeshiftmanagement.DTO.Users.NewPasswordDTO;
 import project.employeeshiftmanagement.DTO.Users.UserDTO;
 import project.employeeshiftmanagement.DTO.Users.updateUserDTO;
 import project.employeeshiftmanagement.DTO.ViewAllShiftRequest;
+import project.employeeshiftmanagement.Exception.*;
 import project.employeeshiftmanagement.Model.*;
 import project.employeeshiftmanagement.Repository.*;
 
@@ -108,7 +109,7 @@ public class AdminService {
         // Set manager if provided
         if (employeeDTO.getManagerUsername() != null && !employeeDTO.getManagerUsername().isEmpty()) {
             Users managerUser = usersRepository.findByUsername(employeeDTO.getManagerUsername())
-                    .orElseThrow(() -> new UsernameNotFoundException("Manager Not Found"));
+                    .orElseThrow(() -> new UserNotFound("Manager Not Found"));
             Employees managerEmp = employeeRepository.getReferenceById(managerUser.getEmployee().getId());
             emp.setManager(managerEmp);
         } else {
@@ -125,16 +126,16 @@ public class AdminService {
     public ResponseEntity<EmployeeViewDTO> employeeDetails(String username) {
 
         Users user = usersRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User Not Found"));
+                .orElseThrow(() -> new UserNotFound("User Not Found"));
         Employees employee = user.getEmployee();
         if (employee == null) {
-            throw new UsernameNotFoundException("Employee Not Found for user: " + username);
+            throw new EmployeeNotFound("Employee Not Found for user: " + username);
         }
         EmployeeViewDTO dto = modelMapper.map(employee, EmployeeViewDTO.class);
 
         if (employee.getManager() != null) {
             Users manager = usersRepository.findByEmployee(employee.getManager())
-                    .orElseThrow(() -> new UsernameNotFoundException("Manager Not Found"));
+                    .orElseThrow(() -> new UserNotFound("Manager Not Found"));
             dto.setManagerUsername(manager.getUsername());
         }
         return ResponseEntity.ok(dto);
@@ -144,7 +145,7 @@ public class AdminService {
     public ResponseEntity<EmployeeViewDTO> updateEmployee(EmployeeViewDTO employeeDTO){
 
         Employees emp = employeeRepository.findById(employeeDTO.getId())
-                .orElseThrow(() -> new RuntimeException("Employee not found"));
+                .orElseThrow(() -> new EmployeeNotFound("Employee not found"));
 
         // Update fields
         emp.setEmployeeFname(employeeDTO.getEmployeeFname());
@@ -164,12 +165,12 @@ public class AdminService {
         if(employeeDTO.getManagerUsername() != null){
 
             Users managerUser = usersRepository.findByUsername(employeeDTO.getManagerUsername())
-                    .orElseThrow(() -> new RuntimeException("Manager username not found"));
+                    .orElseThrow(() -> new UserNotFound("User not found"));
 
             Employees managerEmployee = managerUser.getEmployee();
 
             if(managerEmployee == null){
-                throw new RuntimeException("Manager has no employee record");
+                throw new EmployeeNotFound("no employee found for user: " + employeeDTO.getManagerUsername());
             }
 
             emp.setManager(managerEmployee);
@@ -186,11 +187,11 @@ public class AdminService {
     public ResponseEntity<?> deleteEmployee(String username){
 
         Users user = usersRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFound("User not found"));
 
         Employees employee = user.getEmployee();
         if (employee == null) {
-            throw new RuntimeException("Employee not found for user: " + username);
+            throw new EmployeeNotFound("Employee not found for user: " + username);
         }
 
         // Find employees who report to this manager
@@ -214,11 +215,11 @@ public class AdminService {
     // create User
     public ResponseEntity<?> createUser(UserDTO userDTO){
         if(usersRepository.existsByUsername(userDTO.getUsername())){
-            throw new RuntimeException(userDTO.getUsername());
+            throw new UserAlreadyExist("user with username:"+userDTO.getUsername()+"already exists");
         }
-        Employees emp = employeeRepository.findByEmployeeEmail(userDTO.getEmail()).orElseThrow(()->new UsernameNotFoundException("Employee Not Found"));
+        Employees emp = employeeRepository.findByEmployeeEmail(userDTO.getEmail()).orElseThrow(()->new EmployeeNotFound("Employee Not Found"));
         if(usersRepository.existsByEmployee(emp)){
-            throw new RuntimeException("User already exists for this employee");
+            throw new UserAlreadyExist("User already exists for this employee");
         }
 
         Users user = modelMapper.map(userDTO,Users.class);
@@ -237,19 +238,19 @@ public class AdminService {
 
             // 1. Check username already exists
             if (usersRepository.existsByUsername(userDTO.getUsername())) {
-                throw new RuntimeException("Username already exists: " + userDTO.getUsername());
+                throw new UserAlreadyExist("Username already exists: " + userDTO.getUsername());
             }
 
             // 2. Find employee by email
             Employees emp = employeeRepository.findByEmployeeEmail(userDTO.getEmail())
-                    .orElseThrow(() -> new UsernameNotFoundException(
+                    .orElseThrow(() -> new EmployeeNotFound(
                             "Employee Not Found: " + userDTO.getEmail()
                     ));
 
             // 3. Check if employee already has user
             if (usersRepository.existsByEmployee(emp)) {
-                throw new RuntimeException(
-                        "User already exists for employee: " + userDTO.getEmail()
+                throw new UserAlreadyExist(
+                        "User already exists for employee: "
                 );
             }
 
@@ -285,7 +286,7 @@ public class AdminService {
     // ------------------- Update user -------------------
     public ResponseEntity<?> updateUser(String username, updateUserDTO dto) {
         Users user = usersRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFound("User not found"));
 
         // Update fields if provided
         if (dto.getUsername() != null && !dto.getUsername().isBlank()) {
@@ -314,7 +315,7 @@ public class AdminService {
     }
 
     public ResponseEntity<?> deleteUser(String username){
-        Users user = usersRepository.findByUsername(username).orElseThrow(()->new UsernameNotFoundException("User not found"));
+        Users user = usersRepository.findByUsername(username).orElseThrow(()->new UserNotFound("User not found"));
 
         usersRepository.deleteByUsername(username);
         return ResponseEntity.ok(Map.of("message", "User deleted successfully"));
@@ -325,8 +326,7 @@ public class AdminService {
         Optional<Shifts> existing = shiftsRepository.findByShiftName(createShiftDTO.getShiftName());
 
         if (existing.isPresent()) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("Shift already exists");
+            throw new ShiftAlreadyExist("Shift Already Exist");
         }
 //
 //        if(createShiftDTO.getStart_time().equals(createShiftDTO.getEnd_time())){
@@ -350,8 +350,7 @@ public class AdminService {
                 .orElse(null);
 
         if (existingShift == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "Shift not found"));
+            throw new ShiftNotFound("Shift Not Found");
         }
 
         if (updateShift.getShiftName() != null && !updateShift.getShiftName().isBlank()) {
@@ -387,8 +386,7 @@ public class AdminService {
         Optional<Shifts> optionalShift = shiftsRepository.findByShiftName(shiftname);
 
         if (optionalShift.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "Shift not found"));
+          throw  new ShiftNotFound("Shift Not Found");
         }
 
 
@@ -406,7 +404,7 @@ public class AdminService {
 
 //    update Password
     public ResponseEntity<?> updatePassword(String username, NewPasswordDTO newPasswordDTO){
-        Users user = usersRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        Users user = usersRepository.findByUsername(username).orElseThrow(() -> new UserNotFound("User not found"));
 
         user.setPassword(passwordEncoder.encode(newPasswordDTO.getNewPassword()));
         usersRepository.save(user);
@@ -420,15 +418,15 @@ public class AdminService {
 
 
             Users user = usersRepository.findByUsername(username)
-                    .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                    .orElseThrow(() -> new UserNotFound("User not found"));
 
             Shifts shift = shiftsRepository.findByShiftName(shiftName)
-                    .orElseThrow(() -> new RuntimeException("Shift not found"));
+                    .orElseThrow(() -> new ShiftNotFound("Shift not found"));
 
             Employees employee = user.getEmployee();
 
             if (employee == null) {
-                return ResponseEntity.badRequest().body("Employee not linked to user");
+               throw new EmployeeNotFound("Employee not linked to user");
             }
 
             ShiftAllocation allocation = shiftAllocationRepository
@@ -519,7 +517,7 @@ public class AdminService {
 
 
         LeaveRequest leaveRequest = leaveRequestRepository.findById(viewRequest.getLeave_id())
-                .orElseThrow(() -> new RuntimeException("Request not found"));
+                .orElseThrow(() -> new LeaveRequestNotFound("Request not found"));
         leaveRequest.setStatus("Approved");
         leaveRequest.setReason(viewRequest.getReason());
         leaveRequest.setStart_date(viewRequest.getStart_date());
@@ -543,12 +541,12 @@ public class AdminService {
 
     public ResponseEntity<?> rejectRequest(@Valid ViewRequest viewRequest) {
 
-        Users user  = usersRepository.findByUsername(viewRequest.getUsername()).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        Users user  = usersRepository.findByUsername(viewRequest.getUsername()).orElseThrow(() -> new UserNotFound("User not found"));
         Employees employee = user.getEmployee();
 
 
         LeaveRequest leaveRequest = leaveRequestRepository.findById(viewRequest.getLeave_id())
-                .orElseThrow(() -> new RuntimeException("Request not found"));
+                .orElseThrow(() -> new LeaveRequestNotFound("Request not found"));
         leaveRequest.setStatus("Rejected");
         leaveRequest.setReason(viewRequest.getReason());
         leaveRequest.setStart_date(viewRequest.getStart_date());
@@ -594,7 +592,7 @@ public class AdminService {
     }
 
     public List<ViewAllShiftRequest> getShiftChangeRequest(String username) {
-        Users userx  = usersRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        Users userx  = usersRepository.findByUsername(username).orElseThrow(() -> new UserNotFound("User not found"));
         List<SlotChangeRequest> requests = slotChangeRepository.findByEmployee_Manager(userx.getEmployee());
 
         return   requests
@@ -668,7 +666,7 @@ public class AdminService {
 
     //view all users under manager
     public ResponseEntity<List<updateUserDTO>> viewNewUsers(String username) {
-        Users user = usersRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        Users user = usersRepository.findByUsername(username).orElseThrow(() -> new UserNotFound("User not found"));
 
 
         List<updateUserDTO> users = usersRepository.findAll().stream()
@@ -691,7 +689,7 @@ public class AdminService {
     }
 
     public List<ViewRequest> viewLeaveRequest(String username) {
-        Users userx = usersRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        Users userx = usersRepository.findByUsername(username).orElseThrow(() -> new UserNotFound("User not found"));
 
         List<LeaveRequest> requests = leaveRequestRepository.findByEmployee_Manager(userx.getEmployee());
 
@@ -734,8 +732,8 @@ public class AdminService {
             // Manager handling
             if (employeeDTO.getManagerUsername() != null && !employeeDTO.getManagerUsername().isEmpty()) {
                 Users managerUser = usersRepository.findByUsername(employeeDTO.getManagerUsername())
-                        .orElseThrow(() -> new UsernameNotFoundException(
-                                "Manager Not Found: " + employeeDTO.getManagerUsername()
+                        .orElseThrow(() -> new UserNotFound(
+                                "Manager with username: " + employeeDTO.getManagerUsername() + " not found"
                         ));
 
                 emp.setManager(managerUser.getEmployee()); // no need for getReferenceById

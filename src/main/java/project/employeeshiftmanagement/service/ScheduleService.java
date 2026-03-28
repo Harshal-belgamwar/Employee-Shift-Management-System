@@ -8,6 +8,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import project.employeeshiftmanagement.DTO.ScheduleResponseDTO;
 import project.employeeshiftmanagement.DTO.scheduleAssignDTO;
+import project.employeeshiftmanagement.Exception.ShiftNotFound;
+import project.employeeshiftmanagement.Exception.UserNotFound;
 import project.employeeshiftmanagement.Model.*;
 import project.employeeshiftmanagement.Repository.*;
 
@@ -163,7 +165,7 @@ public class ScheduleService {
     public ResponseEntity<?> approveSchedule(@Valid ScheduleResponseDTO scheduleResponseDTO,String username){
 
         Scheduler scheduler = new Scheduler();
-        Users user =  usersRepository.findByUsername(username).orElseThrow(()->new RuntimeException("user not found!"));
+        Users user =  usersRepository.findByUsername(username).orElseThrow(()->new UserNotFound("user not found!"));
         scheduler.setGeneratedBy(user);
         scheduler.setGeneratedAt(LocalDateTime.now());
         scheduler.setStartDate(LocalDate.now());
@@ -175,16 +177,16 @@ public class ScheduleService {
         //assign shift send notification and update preference request
         scheduleResponseDTO.getScheduleAssignDTOList().stream().forEach((x)->{
 
-            ShiftPreference shiftPreference = shiftPreferenceRepository.findById(x.getPreferenceRequestId()).orElseThrow(()->new RuntimeException("shift request not found!"));
+            ShiftPreference shiftPreference = shiftPreferenceRepository.findById(x.getPreferenceRequestId()).orElseThrow(()->new ShiftNotFound("shift request not found!"));
             shiftPreference.setStatus("Completed!");
             shiftPreference.setScheduler(scheduler);
             shiftPreferenceRepository.save(shiftPreference);
 
             ShiftAllocation shiftAllocation = new ShiftAllocation();
-            Shifts shift = shiftsRepository.findByShiftName(x.getShiftname()).orElseThrow(()->new RuntimeException("shift not found!"));
+            Shifts shift = shiftsRepository.findByShiftName(x.getShiftname()).orElseThrow(()->new ShiftNotFound("shift not found!"));
             shiftAllocation.setShift(shift);
 
-            Users userx = usersRepository.findByUsername(x.getUsername()).orElseThrow(()->new RuntimeException("user not found!"));
+            Users userx = usersRepository.findByUsername(x.getUsername()).orElseThrow(()->new UserNotFound("user not found!"));
             Employees emp = userx.getEmployee();
 
             shiftAllocation.setEmployee(emp);
