@@ -70,6 +70,37 @@ export default function UserManagement() {
         return matchesSearch && matchesRole;
     });
 
+    const [userdata, setUserData] = useState({
+        username: "",
+        role: ""
+    });
+
+    const fetchUser = async () => {
+        try {
+            const resp = await api.get("/auth/me");
+            const data = resp.data;
+            if (data.role) {
+                data.role = data.role.substring(5).toLowerCase();
+            }
+            setUserData(data);
+
+        } catch (error) {
+            toast.error(error);
+        }
+    }
+
+
+
+
+    useEffect(() => {
+        fetchUser();
+
+    }, []);
+
+    // const username = userdata?.username;
+    // const role = userdata?.role?.substring(5).trim().toLowerCase();
+
+
 
     useEffect(() => {
         setCurrentPage(1);
@@ -134,29 +165,34 @@ export default function UserManagement() {
     };
 
 
-    const fetchUsers = async () => {
-        const role = sessionStorage.getItem("role");
+    const fetchUsers = async (role, username) => {
+
+
         try {
-            if(role === "admin"){
+            if (role === "admin") {
+
                 const response = await api.get(`/admin/users`);
                 setUsers(response.data);
-            }else{
-                const username = sessionStorage.getItem("username");
+            } else {
+
+
                 const response = await api.get(`/admin/users/${username}`);
                 setUsers(response.data);
             }
-            
-            console.log(response.data);
-
-           
         } catch (error) {
             console.error("Error fetching users:", error);
         }
     };
 
+    // useEffect(() => {
+    //     fetchUsers(role, username);
+    // }, [showModal]);
+
     useEffect(() => {
-        fetchUsers();
-    }, [showModal]);
+        if (userdata?.username && userdata?.role) {
+            fetchUsers(userdata.role, userdata.username);
+        }
+    }, [userdata]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -407,7 +443,7 @@ export default function UserManagement() {
                                                         </button>
 
                                                         {/* Delete */}
-                                                        {sessionStorage.getItem("role") === "admin" && <button
+                                                        {userdata.role?.substring(5).trim().toLowerCase() === "admin" && <button
                                                             onClick={() => handleDelete(user)}
                                                             className="text-xs font-semibold px-2.5 py-1.5 rounded-lg text-red-500 bg-red-50 border border-red-100 hover:bg-red-100 transition-colors"
                                                         >

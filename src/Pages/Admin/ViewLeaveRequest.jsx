@@ -48,8 +48,27 @@ export default function ViewLeaveRequest() {
 
     const navigate = useNavigate();
 
-    const fetchRequests = async () => {
-        const role = sessionStorage.getItem("role");
+    const [userdata, setUserData] = useState({
+        username: "",
+        role: ""
+    })
+
+    const fetchUser = async () => {
+        try {
+            const resp = await api.get("/auth/me");
+            console.log(resp.data);
+            setUserData(resp.data);
+
+        } catch (error) {
+            toast.error(error);
+        }
+    }
+
+    useEffect(() => {
+        fetchUser();
+    }, [])
+
+    const fetchRequests = async (username, role) => {
         try {
             if (role === "admin") {
                 const res = await api.get("/admin/get-all-request");
@@ -61,7 +80,7 @@ export default function ViewLeaveRequest() {
                 setAllRequests(sorted);
 
             } else {
-                const username = sessionStorage.getItem("username");
+
                 const res = await api.get(`/admin/get-all-request/${username}`);
 
                 const sorted = res.data.sort(
@@ -76,7 +95,12 @@ export default function ViewLeaveRequest() {
         }
     };
 
-    useEffect(() => { fetchRequests(); }, []);
+    useEffect(() => {
+        if (userdata?.username && userdata?.role) {
+            const role = (userdata.role || "").substring(5).trim().toLowerCase();
+            fetchRequests(userdata.username, role);
+        }
+    }, [userdata]);
 
     useEffect(() => {
         setAnimating(true);

@@ -29,19 +29,37 @@ export default function LeaveRequests() {
     const [requests, setRequests] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [form, setForm] = useState({ startDate: "", endDate: "", reason: "" });
+    const [userdata, setUserData] = useState({
+        username: "",
+        role: ""
+    });
     const navigate = useNavigate();
 
+    const fetchUser = async () => {
+        try {
+            const resp = await api.get("/auth/me");
+            const data = resp.data;
+            if (data.role) {
+                data.role = data.role.substring(5).toLowerCase();
+            }
+            setUserData(data);
+        } catch (error) {
+            toast.error(error);
+        }
+    }
+
     useEffect(() => {
+        fetchUser();
         fetchRequests();
     }, []);
 
     const fetchRequests = async () => {
         try {
-            const username = sessionStorage.getItem("username");
+            const username = userdata.username || sessionStorage.getItem("username");
             const res = await api.get(`/employee/leave-request/${username}`);
             console.log(res.data);
             if (res.data.length === 0) {
-                
+
                 return;
             }
 
@@ -67,7 +85,7 @@ export default function LeaveRequests() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const username = sessionStorage.getItem("username");
+            const username = userdata.username || sessionStorage.getItem("username");
             await api.post(`/employee/leave-request/${username}`, {
                 start_date: form.startDate,
                 end_date: form.endDate,

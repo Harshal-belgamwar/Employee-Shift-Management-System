@@ -69,13 +69,13 @@ const strengthConfig = [
     { label: "Strong", width: "w-full", bar: "bg-indigo-400", text: "text-indigo-400" },
 ];
 
-export default function ChangePassword({ closeModal }) {
+export default function ChangePassword({ closeModal, userdata }) {
     const [form, setForm] = useState({ newPassword: "", confirmPassword: "" });
     const [showNew, setShowNew] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    const username = sessionStorage.getItem("username");
+    const username = userdata?.username || sessionStorage.getItem("username");
 
     // We don't need the user check here because the employee is updating their own password
 

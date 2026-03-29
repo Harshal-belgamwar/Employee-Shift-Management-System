@@ -4,9 +4,12 @@ import { useNavigate } from "react-router-dom";
 
 
 
-export default function Navbar({ pageTitle = "Dashboard", onOpenProfile, onOpenPasswordModal }) {
+export default function Navbar({ pageTitle = "Dashboard", onOpenProfile, onOpenPasswordModal, userdata }) {
     const [showNotifications, setShowNotifications] = useState(false);
     const [showProfile, setShowProfile] = useState(false);
+
+    const displayName = userdata?.username || sessionStorage.getItem("username") || "User";
+    const displayRole = userdata?.role || sessionStorage.getItem("role") || "";
 
 
 
@@ -66,18 +69,18 @@ export default function Navbar({ pageTitle = "Dashboard", onOpenProfile, onOpenP
                         className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-800"
                     >
                         <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold">
-                            {sessionStorage.getItem("username").charAt(0).toUpperCase()}
+                            {displayName.charAt(0).toUpperCase()}
                         </div>
                         <span className="hidden sm:block text-sm text-slate-300">
-                            {sessionStorage.getItem("username")}
+                            {displayName}
                         </span>
                     </button>
 
                     {showProfile && (
                         <div className="absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-xl shadow-lg">
                             <div className="px-4 py-3 border-b border-slate-700">
-                                <p className="text-sm text-white font-medium">{sessionStorage.getItem("username")}</p>
-                                <p className="text-xs text-slate-400">{sessionStorage.getItem("role")}</p>
+                                <p className="text-sm text-white font-medium">{displayName}</p>
+                                <p className="text-xs text-slate-400">{displayRole}</p>
                             </div>
 
                             <button className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-800" onClick={onOpenProfile}>

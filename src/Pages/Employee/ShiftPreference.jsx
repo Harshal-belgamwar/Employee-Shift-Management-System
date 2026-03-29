@@ -133,15 +133,40 @@ export default function ShiftPreference() {
     const [shifts, setShifts] = useState([]);
 
     const navigate = useNavigate();
-    const username = sessionStorage.getItem("username");
+    const [userdata, setUserData] = useState({
+        username: "",
+        role: ""
+    });
+
+    const username = userdata.username || sessionStorage.getItem("username");
+
+    const fetchUser = async () => {
+        try {
+            const resp = await api.get("/auth/me");
+            const data = resp.data;
+            if (data.role) {
+                data.role = data.role.substring(5).toLowerCase();
+            }
+            setUserData(data);
+        } catch (error) {
+            toast.error(error);
+        }
+    }
 
     const [form, setForm] = useState({
-        username: username,
+        username: "",
         preference1: "",
         preference2: ""
     });
 
+    useEffect(() => {
+        if (userdata.username) {
+            setForm(prev => ({ ...prev, username: userdata.username }));
+        }
+    }, [userdata.username]);
+
     const fetchPreferences = async () => {
+        if (!username) return;
         try {
             const res = await api.get(`/employee/shift-preference/${username}`);
             setPreferences(res.data);
@@ -160,9 +185,15 @@ export default function ShiftPreference() {
     };
 
     useEffect(() => {
-        fetchPreferences();
+        fetchUser();
         fetchShifts();
     }, []);
+
+    useEffect(() => {
+        if (username) {
+            fetchPreferences();
+        }
+    }, [username]);
 
     const handleChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });

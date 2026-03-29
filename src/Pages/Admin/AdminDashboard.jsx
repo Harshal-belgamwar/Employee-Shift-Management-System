@@ -7,8 +7,28 @@ import { useEffect, useState } from "react";
 
 export default function AdminDashboard() {
 
+
+
     const [data, setData] = useState({});
     const navigate = useNavigate();
+    const [userdata, setUserData] = useState({
+        username: "",
+        role: ""
+    })
+
+    const fetchUser = async () => {
+        try {
+            const resp = await api.get("/auth/me");
+            const data = resp.data;
+            if (data.role) {
+                data.role = data.role.substring(5).toLowerCase();
+            }
+            setUserData(data);
+
+        } catch (error) {
+            toast.error(error);
+        }
+    }
 
 
     useEffect(() => {
@@ -24,13 +44,14 @@ export default function AdminDashboard() {
         };
 
         fetchData();
+        fetchUser();
     }, []);
 
     return (
         <div className="space-y-8">
 
             <div className="flex flex-col w-full h-[5vh]">
-                <Navbar pageTitle="Admin Dashboard" />
+                <Navbar pageTitle="Admin Dashboard" userdata={userdata} />
             </div>
 
             {/* Stats */}

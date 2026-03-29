@@ -27,12 +27,34 @@ const statusConfig = {
 export default function ShiftRequestHistory() {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [userdata, setUserData] = useState({
+        username: "",
+        role: ""
+    });
     const navigate = useNavigate();
+
+    const fetchUser = async () => {
+        try {
+            const resp = await api.get("/auth/me");
+            const data = resp.data;
+            if (data.role) {
+                data.role = data.role.substring(5).toLowerCase();
+            }
+            setUserData(data);
+        } catch (error) {
+            toast.error(error);
+        }
+    }
+
+    useEffect(() => {
+        fetchUser();
+    }, []);
 
     useEffect(() => {
         async function fetchRequests() {
+            if (!userdata.username) return;
             try {
-                const username = sessionStorage.getItem("username");
+                const username = userdata.username || sessionStorage.getItem("username");
                 const res = await api.get(`/employee/shift-request/${username}`);
                 setRequests(res.data);
             } catch (err) {
@@ -42,7 +64,7 @@ export default function ShiftRequestHistory() {
             }
         }
         fetchRequests();
-    }, []);
+    }, [userdata.username]);
 
     if (loading) {
         return (

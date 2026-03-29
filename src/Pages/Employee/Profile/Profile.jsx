@@ -31,12 +31,34 @@ function Section({ title, icon, children }) {
 export default function Profile({ handleBack }) {
     const [employee, setEmployee] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [userdata, setUserData] = useState({
+        username: "",
+        role: ""
+    });
     const navigate = useNavigate();
+
+    const fetchUser = async () => {
+        try {
+            const resp = await api.get("/auth/me");
+            const data = resp.data;
+            if (data.role) {
+                data.role = data.role.substring(5).toLowerCase();
+            }
+            setUserData(data);
+        } catch (error) {
+            toast.error(error);
+        }
+    }
+
+    useEffect(() => {
+        fetchUser();
+    }, []);
 
     useEffect(() => {
         async function fetchProfile() {
+            if (!userdata.username) return;
             try {
-                const username = sessionStorage.getItem("username");
+                const username = userdata.username || sessionStorage.getItem("username");
                 const res = await api.get(`/employee/profile/${username}`);
                 setEmployee(res.data);
             } catch (error) {
@@ -46,7 +68,7 @@ export default function Profile({ handleBack }) {
             }
         }
         fetchProfile();
-    }, []);
+    }, [userdata.username]);
 
     if (loading) {
         return (

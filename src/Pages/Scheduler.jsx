@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../utils/api";
 import { toast } from "react-toastify";
@@ -41,6 +41,8 @@ function Avatar({ name }) {
     );
 }
 
+
+
 const Scheduler = () => {
     const navigate = useNavigate();
     const [schedule, setSchedule] = useState([]);
@@ -48,6 +50,29 @@ const Scheduler = () => {
     const [selectedShift, setSelectedShift] = useState("");
     const [scheduleData, setScheduleData] = useState([]);
     const [loading, setLoading] = useState(false);
+
+    const [userdata, setUserData] = useState({
+        username: "",
+        role: ""
+    })
+
+    const fetchUser = async () => {
+        try {
+            const resp = await api.get("/auth/me");
+            const data = resp.data;
+            if (data.role) {
+                data.role = data.role.substring(5).toLowerCase();
+            }
+            setUserData(data);
+
+        } catch (error) {
+            toast.error(error);
+        }
+    }
+
+    useEffect(() => {
+        fetchUser();
+    }, [])
 
     const handleGenerate = async () => {
         try {
@@ -84,10 +109,10 @@ const Scheduler = () => {
     };
 
     const handleApprove = async () => {
-        const username = sessionStorage.getItem("username");
+
         try {
             setLoading(true);
-            const response = await api.post(`/admin/schedule-generate/approve/${username}`, scheduleData);
+            const response = await api.post(`/admin/schedule-generate/approve/${userdata.username}`, scheduleData);
             const data = response.data;
             toast.success("Schedule approved successfully ✅");
 
@@ -110,7 +135,6 @@ const Scheduler = () => {
     const totalAssigned = schedule.length;
     const totalRemaining = Object.values(remainingSlots).reduce((s, v) => s + v, 0);
 
-    const role = sessionStorage.getItem("role");
 
     return (
         <>

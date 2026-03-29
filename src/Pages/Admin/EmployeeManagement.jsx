@@ -80,8 +80,7 @@ export default function EmployeeManagement() {
     const currentUsers = filteredUsers.slice(startIndex, startIndex + USERS_PER_PAGE);
 
     const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
-    const username = sessionStorage.getItem("username");
-    const role = sessionStorage.getItem("role");
+
     const openAdd = () => {
         // setEditUser(null);
         // setForm({ name: "", email: "", role: "employee", department: "Engineering", status: "active" });
@@ -100,6 +99,30 @@ export default function EmployeeManagement() {
         setEditUser(null);
     };
 
+    const [userdata, setUserData] = useState({
+        username: "",
+        role: ""
+    })
+
+    const fetchUser = async () => {
+        try {
+            const resp = await api.get("/auth/me");
+            console.log(resp.data);
+            setUserData(resp.data);
+
+        } catch (error) {
+            toast.error(error);
+        }
+    }
+
+    useEffect(() => {
+        fetchUser();
+    }, [])
+
+
+    const username = userdata.username;
+    const role = userdata?.role?.substring(5).trim().toLowerCase();
+    console.log(role);
 
 
 
@@ -129,14 +152,19 @@ export default function EmployeeManagement() {
 
     const fetchUsers = async () => {
         try {
-            if (role === "admin") {
-                const response = await api.get(`/admin/users`);
-                setUsers(response.data);
-                console.log(response.data);
-            } else {
+
+            if (role === "manager") {
+                console.log(role === "admin");
                 const response = await api.get(`/admin/users/${username}`);
                 setUsers(response.data);
                 console.log(response.data);
+            } else {
+
+
+                const response = await api.get(`/admin/users`);
+                setUsers(response.data);
+                console.log(response.data);
+
             }
 
         } catch (error) {
@@ -309,7 +337,7 @@ export default function EmployeeManagement() {
                                     </tr>
                                 ) : (
                                     currentUsers.map((user) => {
-                                        const role = roleConfig[user.role] || roleConfig.employee;
+                                        const Role = roleConfig[user.role] || roleConfig.employee;
                                         const status = statusConfig[user.status] || statusConfig.active;
 
                                         return (
@@ -322,7 +350,7 @@ export default function EmployeeManagement() {
                                                 <td className="px-6 py-3">
                                                     <div className="flex items-center gap-3">
                                                         <div
-                                                            className={`w-8 h-8 rounded-xl bg-gradient-to-br ${role.avatarGradient} flex items-center justify-center text-xs font-bold text-white shrink-0`}
+                                                            className={`w-8 h-8 rounded-xl bg-gradient-to-br ${Role.avatarGradient} flex items-center justify-center text-xs font-bold text-white shrink-0`}
                                                         >
                                                             {(user.username || "U").charAt(0).toUpperCase()}
                                                         </div>
@@ -371,6 +399,7 @@ export default function EmployeeManagement() {
                                                         </button>}
 
                                                         {/* Delete */}
+                                                     
                                                         {role === "admin" && <button
                                                             onClick={() => handleDelete(user)}
                                                             className="text-xs font-semibold px-2.5 py-1.5 rounded-lg text-red-500 bg-red-50 border border-red-100 hover:bg-red-100 transition-colors"

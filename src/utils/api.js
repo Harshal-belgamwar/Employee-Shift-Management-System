@@ -5,15 +5,13 @@ const api = axios.create({
     headers: {
         "Content-Type": "application/json",
     },
+    withCredentials: true
 });
 
 // Request interceptor — attach JWT token
 api.interceptors.request.use(
     (config) => {
-        const token = sessionStorage.getItem("token");
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
+        config.withCredentials = true;
         return config;
     },
     (error) => Promise.reject(error)

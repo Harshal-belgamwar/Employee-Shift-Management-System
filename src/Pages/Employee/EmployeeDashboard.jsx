@@ -10,7 +10,7 @@ import ChangePassword from "./User/ChangePassword";
 import api from "../../utils/api";
 import { toast } from "react-toastify";
 
-function ShiftChangeModal({ onClose }) {
+function ShiftChangeModal({ onClose, userdata }) {
     const [form, setForm] = useState({ requestedShift: "", reason: "" });
     const [loading, setLoading] = useState(false);
     const [shifts, setShifts] = useState([]);
@@ -38,8 +38,7 @@ function ShiftChangeModal({ onClose }) {
         e.preventDefault();
         setLoading(true);
         try {
-            const username = sessionStorage.getItem("username");
-            await api.post(`/employee/shift-change-request/${username}`, form);
+            await api.post(`/employee/shift-change-request/${userdata.username}`, form);
             toast.success("Shift change request submitted");
             onClose();
         } catch (err) {
@@ -181,12 +180,29 @@ export default function EmployeeDashboard() {
     const [openPasswordModal, setOpenPasswordModal] = useState(false);
     const [openShiftChange, setOpenShiftChange] = useState(false);
     const [notifications, setNotifications] = useState([]);
+    const [userdata, setUserData] = useState({
+        username: "",
+        role: ""
+    });
     const navigate = useNavigate();
+
+    const fetchUser = async () => {
+        try {
+            const resp = await api.get("/auth/me");
+            const data = resp.data;
+            if (data.role) {
+                data.role = data.role.substring(5).toLowerCase();
+            }
+            setUserData(data);
+        } catch (error) {
+            toast.error(error);
+        }
+    }
 
     const myShifts = shifts.filter((s) => s.employeeId === 2);
     const upcomingShifts = myShifts.slice(0, 3);
 
-    const roleName = sessionStorage.getItem("role");
+    const roleName = userdata.role;
 
     const formatDateTime = (date) => {
         return new Date(date).toLocaleString("en-IN", {
@@ -199,7 +215,8 @@ export default function EmployeeDashboard() {
     };
 
     const fetchNotifications = async () => {
-        const username = sessionStorage.getItem("username");
+        const username = userdata.username;
+        if (!username) return;
         try {
             const response = await api.get(`employee/notification/${username}`);
 
@@ -214,8 +231,12 @@ export default function EmployeeDashboard() {
     };
 
     useEffect(() => {
-        fetchNotifications();
+        fetchUser();
     }, []);
+
+    useEffect(() => {
+        fetchNotifications();
+    }, [userdata.username]);
 
     return (
         <div className="space-y-8 flex flex-col p-3">
@@ -225,6 +246,7 @@ export default function EmployeeDashboard() {
                     pageTitle="Employee Dashboard"
                     onOpenProfile={() => setOpenProfile(true)}
                     onOpenPasswordModal={() => setOpenPasswordModal(true)}
+                    userdata={userdata}
                 />
             </div>
 
@@ -408,12 +430,12 @@ export default function EmployeeDashboard() {
 
             {/* Change password modal */}
             {openPasswordModal && (
-                <ChangePassword closeModal={() => setOpenPasswordModal(false)} />
+                <ChangePassword closeModal={() => setOpenPasswordModal(false)} userdata={userdata} />
             )}
 
             {/* Shift change modal */}
             {openShiftChange && (
-                <ShiftChangeModal onClose={() => setOpenShiftChange(false)} />
+                <ShiftChangeModal onClose={() => setOpenShiftChange(false)} userdata={userdata} />
             )}
         </div>
     );
