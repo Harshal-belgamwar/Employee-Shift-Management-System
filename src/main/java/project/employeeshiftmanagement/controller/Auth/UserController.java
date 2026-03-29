@@ -2,12 +2,16 @@ package project.employeeshiftmanagement.controller.Auth;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.server.Cookie;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import project.employeeshiftmanagement.Config.CustomUserDetails;
@@ -17,6 +21,8 @@ import project.employeeshiftmanagement.Utilities.JwtUtility;
 import project.employeeshiftmanagement.service.UserService;
 
 import java.util.Map;
+
+import static io.jsonwebtoken.Jwts.header;
 
 @RequestMapping("/auth")
 @RestController
@@ -58,7 +64,20 @@ public class UserController {
             CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
 
             String jwt = jwtUtility.generateToken(customUserDetails); // optional JWT
-            return ResponseEntity.ok(Map.of(
+
+            ResponseCookie cookie = ResponseCookie.from("token",jwt)
+                    .httpOnly(true)
+                    .secure(false)
+                    .path("/")
+                    .maxAge(3600)
+                    .sameSite("Lax")
+                    .build();
+
+            return ResponseEntity
+
+                    .ok()
+                    .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                    .body(Map.of(
                     "message", "Login successful",
                     "token", jwt,
                     "username", customUserDetails.getUsername(),
@@ -74,8 +93,26 @@ public class UserController {
         }
 
     }
+    @GetMapping("/me")
+    public ResponseEntity<?> getMe() {
 
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
+        String username = auth.getName();
+
+        String role = auth.getAuthorities()
+                .stream()
+                .findFirst()
+                .map(Object::toString)
+                .orElse("NO_ROLE");
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "username", username,
+                        "role", role
+                )
+        );
+    }
 
 
 

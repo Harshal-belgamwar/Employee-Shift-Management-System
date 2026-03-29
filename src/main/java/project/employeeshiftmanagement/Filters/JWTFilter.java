@@ -2,6 +2,7 @@ package project.employeeshiftmanagement.Filters;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,18 +29,29 @@ public class JWTFilter extends OncePerRequestFilter {
 
     @Override
     public void doFilterInternal(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, FilterChain filterChain) throws ServletException, IOException {
-        String authHeader = httpServletRequest.getHeader("Authorization");
+//        String authHeader = httpServletRequest.getHeader("Authorization");
+
+        String token = null;
+
+        if (httpServletRequest.getCookies() != null) {
+            for (Cookie cookie : httpServletRequest.getCookies()) {
+                if (cookie.getName().equals("token")) {
+                    token = cookie.getValue();
+                    break;
+                }
+            }
+        }
 
         String path = httpServletRequest.getRequestURI();
 
-        if (path.startsWith("/auth/")) {
+        if (path.startsWith("/auth/signup")||path.startsWith("/auth/login")) {
             filterChain.doFilter(httpServletRequest, httpServletResponse);
             return;
         }
 
-        if(authHeader!=null && authHeader.startsWith("Bearer ")) {
+        if(token !=null) {
             try {
-                String token = authHeader.substring(7);
+
                 String username = jwtUtility.extractUsername(token);
 
                 if(username!=null && SecurityContextHolder.getContext().getAuthentication() == null) {

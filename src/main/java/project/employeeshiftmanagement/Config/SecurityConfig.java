@@ -55,6 +55,8 @@ public class SecurityConfig {
                         auth->auth
                                 .requestMatchers("/auth/login").permitAll()
                                 .requestMatchers("/auth/signup").permitAll()
+                                .requestMatchers("/auth/me").permitAll()
+                                .requestMatchers("/error").permitAll()
                                 .requestMatchers("/admin/**").hasAnyRole("ADMIN","MANAGER")
                                 .requestMatchers("/manager/**").hasRole("MANAGER")
                                 .requestMatchers("/employee/**").hasAnyRole("EMPLOYEE","MANAGER")
@@ -86,7 +88,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.addAllowedOriginPattern("http://localhost:*");
+        configuration.addAllowedOriginPattern("http://localhost:5173");
         configuration.setAllowedMethods(List.of("*"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
