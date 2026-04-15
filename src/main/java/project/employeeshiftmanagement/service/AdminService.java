@@ -429,15 +429,17 @@ public class AdminService {
                throw new EmployeeNotFound("Employee not linked to user");
             }
 
-            ShiftAllocation allocation = shiftAllocationRepository
-                    .findByEmployee(employee)
-                    .orElseGet(() -> {
-                        ShiftAllocation newAllocation = new ShiftAllocation();
-                        newAllocation.setEmployee(employee);
-                        newAllocation.setAssignmentdate(new Date());
-                        return newAllocation;
-                    });
+        List<ShiftAllocation> allocations = shiftAllocationRepository.findByEmployee(employee);
 
+        ShiftAllocation allocation;
+
+        if (allocations.isEmpty()) {
+            allocation = new ShiftAllocation();
+            allocation.setEmployee(employee);
+            allocation.setAssignmentdate(new Date());
+        } else {
+            allocation = allocations.get(0); // ⚠️ not ideal
+        }
             allocation.setShift(shift);
 
             shiftAllocationRepository.save(allocation);

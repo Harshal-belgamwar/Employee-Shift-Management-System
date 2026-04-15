@@ -97,7 +97,9 @@ public class UserController {
     public ResponseEntity<?> getMe() {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
+        if (auth == null || !auth.isAuthenticated() || auth.getPrincipal().equals("anonymousUser")) {
+            return ResponseEntity.status(401).body("Unauthorized");
+        }
         String username = auth.getName();
 
         String role = auth.getAuthorities()

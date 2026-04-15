@@ -7,14 +7,15 @@ import project.employeeshiftmanagement.Model.ShiftAllocation;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface ShiftAllocationRepository extends JpaRepository<ShiftAllocation, Integer> {
 
-    Optional<ShiftAllocation> findByEmployee(Employees employee);
+    List<ShiftAllocation> findByEmployee(Employees employee);
 
     Optional<ShiftAllocation> findByAssignmentdate(Date date);
 
-    Collection<ShiftAllocation> findByEmployeeAndAllotmentType(Employees employee, String allotmentType);
+    List<ShiftAllocation> findByEmployeeAndAllotmentType(Employees employee, String allotmentType);
 }

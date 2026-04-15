@@ -28,6 +28,7 @@ import project.employeeshiftmanagement.Repository.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 
 
@@ -284,15 +285,23 @@ public class EmployeeService {
     }
 
     public ShiftAllocationDTO getShiftAllocation(String username, LocalDate date) {
-        Date convertedDate = java.sql.Date.valueOf(date);
+
         Users user = usersRepository.findByUsername(username).orElseThrow(() -> new UserNotFound("User not found"));
 
-        List<ShiftAllocation> shiftAllocations = shiftAllocationRepository.findByAssignmentdate(convertedDate).stream().toList();
+        List<ShiftAllocation> shiftAllocations = shiftAllocationRepository.findByEmployee(user.getEmployee()).stream().toList();
 
 
         Optional<ShiftAllocation> shiftAllocation = shiftAllocations
                 .stream()
-                .filter((x)->x.getEmployee().equals(user.getEmployee()) && x.getAllotmentType().equalsIgnoreCase("request"))
+                .filter(x -> {
+                    LocalDate assignmentDate = x.getAssignmentdate()
+                            .toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate();
+
+                    return assignmentDate.equals(date) &&
+                            x.getAllotmentType().equalsIgnoreCase("request");
+                })
                 .findFirst();
 
         if(shiftAllocation.isPresent()) {
@@ -309,11 +318,14 @@ public class EmployeeService {
                             .findByEmployeeAndAllotmentType(user.getEmployee(), "scheduled")
                             .stream()
                             .filter(x -> {
-                                Date start = x.getAssignmentdate();
-                                Date end = addOneMonth(start);
+                                LocalDate start = x.getAssignmentdate()
+                                        .toInstant()
+                                        .atZone(ZoneId.systemDefault())
+                                        .toLocalDate();
 
-                                return (convertedDate.equals(start) || convertedDate.after(start))
-                                        && (convertedDate.before(end) || convertedDate.equals(end));
+                                LocalDate end = start.plusMonths(1);
+
+                                return (!date.isBefore(start) && !date.isAfter(end));
                             })
                             .findFirst()
                             .orElse(null);
