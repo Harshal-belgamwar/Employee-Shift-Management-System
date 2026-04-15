@@ -443,7 +443,7 @@ export default function UserManagement() {
                                                         </button>
 
                                                         {/* Delete */}
-                                                        {userdata.role?.substring(5).trim().toLowerCase() === "admin" && <button
+                                                        {userdata.role === "admin" && <button
                                                             onClick={() => handleDelete(user)}
                                                             className="text-xs font-semibold px-2.5 py-1.5 rounded-lg text-red-500 bg-red-50 border border-red-100 hover:bg-red-100 transition-colors"
                                                         >

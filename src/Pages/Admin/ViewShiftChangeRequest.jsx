@@ -135,7 +135,10 @@ export default function ViewLeaveRequest() {
                 toast.success(res.data.message);
             }
 
-            fetchRequests();
+            if (userdata?.username && userdata?.role) {
+                const role = (userdata.role || "").substring(5).trim().toLowerCase();
+                fetchRequests(userdata.username, role);
+            }
             handleFilter();
 
         } catch (error) {

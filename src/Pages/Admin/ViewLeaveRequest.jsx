@@ -131,7 +131,11 @@ export default function ViewLeaveRequest() {
                 toast.success(res.data.message);
             }
             handleFilter();
-            fetchRequests();
+            if (userdata?.username && userdata?.role) {
+                const role = (userdata.role || "").substring(5).trim().toLowerCase();
+                fetchRequests(userdata.username, role);
+            }
+
         } catch (error) {
             toast.error(error?.response?.data?.message || "Failed to update leave request");
         }

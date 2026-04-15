@@ -32,7 +32,17 @@ function ShiftChangeModal({ onClose, userdata }) {
     useEffect(() => {
         fetchShifts();
 
+
     }, []);
+
+    const fetchUserShift = async () => {
+        try {
+            const response = await api.get(`/shift-assign/${username}/${date}`);
+            setForm(response.data);
+        } catch (err) {
+            toast.error(err?.response?.data?.message || "Failed to fetch shift");
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -230,6 +240,15 @@ export default function EmployeeDashboard() {
         }
     };
 
+    // const fetchUserShift = async (date) => {
+    //     try {
+    //         const response = await api.get(`/shift-assign/${userdata.username}/${date}`);
+    //         setForm(response.data);
+    //     } catch (err) {
+    //         toast.error(err?.response?.data?.message || "Failed to fetch shift");
+    //     }
+    // };
+
     useEffect(() => {
         fetchUser();
     }, []);
@@ -362,7 +381,7 @@ export default function EmployeeDashboard() {
                     <div className="section-card-header">
                         <h3>📅 Shift Calendar</h3>
                     </div>
-                    <Calendar shifts={shifts.filter((s) => s.employeeId === 2)} />
+                    <Calendar shifts={shifts.filter((s) => s.employeeId === 2) } userData={userdata} />
                 </div>
 
 

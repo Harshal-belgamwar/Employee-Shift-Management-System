@@ -1,4 +1,6 @@
 import { useState, useMemo } from "react";
+import api from "../utils/api";
+import { toast } from "react-toastify";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -8,12 +10,17 @@ const typeColors = {
     Night: "#8b5cf6",
 };
 
-export default function Calendar({ shifts = [] }) {
+export default function Calendar({ shifts = [], userData }) {
     const [currentDate, setCurrentDate] = useState(new Date());
 
     // 🔥 MODAL STATE
     const [openModal, setOpenModal] = useState(false);
     const [selectedDate, setSelectedDate] = useState(null);
+    const [form, setForm] = useState({
+        shiftName: "",
+        startTime: "",
+        endTime: "",
+    });
 
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -29,21 +36,7 @@ export default function Calendar({ shifts = [] }) {
         year: "numeric",
     });
 
-    // Group shifts by date
-    const shiftsByDate = useMemo(() => {
-        const map = {};
-        shifts.forEach((s) => {
-            const day = parseInt(s.date.split("-")[2], 10);
-            const m = parseInt(s.date.split("-")[1], 10) - 1;
-            const y = parseInt(s.date.split("-")[0], 10);
 
-            if (y === year && m === month) {
-                if (!map[day]) map[day] = [];
-                map[day].push(s);
-            }
-        });
-        return map;
-    }, [shifts, year, month]);
 
     const today = new Date();
 
@@ -56,18 +49,31 @@ export default function Calendar({ shifts = [] }) {
     for (let i = 0; i < firstDayOfMonth; i++) cells.push(null);
     for (let d = 1; d <= daysInMonth; d++) cells.push(d);
 
-    // 🔥 OPEN MODAL
-    const handleView = (day) => {
-        const date = new Date(year, month, day);
-        const formatted = date.toISOString().split("T")[0];
 
-        setSelectedDate(formatted);
-        setOpenModal(true);
+
+    //  OPEN MODAL
+    const handleView = async (day) => {
+        try {
+            const date = new Date(year, month, day);
+
+            const formatted = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+            setSelectedDate(formatted);
+            setOpenModal(true);
+
+            const response = await api.get(
+                `/employee/shift-assign/${userData.username}/${formatted}`
+            );
+            console.log(response.data);
+            setForm(response.data);
+        } catch (err) {
+            console.log(err);
+            toast.error(
+                err?.response?.data?.message || "Failed to fetch shift"
+            );
+        }
     };
 
-    const selectedShifts = shifts.filter(
-        (s) => s.date?.split("T")[0] === selectedDate
-    );
 
     return (
         <div className="relative">
@@ -113,30 +119,11 @@ export default function Calendar({ shifts = [] }) {
                         }}
                     >
                         {day && (
-                            <>
+                            <div className="flex flex-col">
                                 {/* DATE */}
                                 <span className="text-xs text-slate-400">
                                     {day}
                                 </span>
-
-                                {/* SHIFT PREVIEW */}
-                                <div className="mt-1">
-                                    {(shiftsByDate[day] || [])
-                                        .slice(0, 2)
-                                        .map((s, idx) => (
-                                            <div
-                                                key={idx}
-                                                className="text-[9px] truncate"
-                                                style={{
-                                                    color:
-                                                        typeColors[s.type] ||
-                                                        "#6366f1",
-                                                }}
-                                            >
-                                                {s.type} {s.startTime}
-                                            </div>
-                                        ))}
-                                </div>
 
                                 {/* VIEW BUTTON */}
                                 <button
@@ -145,55 +132,150 @@ export default function Calendar({ shifts = [] }) {
                                 >
                                     View
                                 </button>
-                            </>
+                            </div>
                         )}
                     </div>
                 ))}
             </div>
 
             {/* ================= MODAL ================= */}
+            {/* ================= MODAL ================= */}
             {openModal && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
-                    <div className="bg-slate-900 w-[320px] rounded-xl p-4 relative shadow-xl">
+                <div className="fixed inset-0 flex items-center justify-center z-50"
+                    style={{ backdropFilter: "blur(6px)", background: "rgba(0,0,0,0.55)" }}>
+                    <div
+                        style={{
+                            width: 340,
+                            background: "linear-gradient(145deg, #0f172a 0%, #1e293b 100%)",
+                            borderRadius: 20,
+                            boxShadow: "0 0 0 1px rgba(99,102,241,0.18), 0 24px 64px rgba(0,0,0,0.6), 0 0 40px rgba(99,102,241,0.08)",
+                            padding: "28px 24px 24px",
+                            position: "relative",
+                            overflow: "hidden",
+                        }}
+                    >
+                        {/* Decorative top accent bar */}
+                        <div style={{
+                            position: "absolute",
+                            top: 0, left: 0, right: 0,
+                            height: 3,
+                            background: "linear-gradient(90deg, #6366f1, #8b5cf6, #a78bfa)",
+                            borderRadius: "20px 20px 0 0",
+                        }} />
+
+                        {/* Decorative glow blob */}
+                        <div style={{
+                            position: "absolute",
+                            top: -40, right: -40,
+                            width: 140, height: 140,
+                            borderRadius: "50%",
+                            background: "radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)",
+                            pointerEvents: "none",
+                        }} />
 
                         {/* CLOSE */}
                         <button
                             onClick={() => setOpenModal(false)}
-                            className="absolute top-2 right-2 text-slate-400 hover:text-red-400"
+                            style={{
+                                position: "absolute",
+                                top: 14, right: 14,
+                                background: "rgba(255,255,255,0.05)",
+                                border: "1px solid rgba(255,255,255,0.08)",
+                                color: "#94a3b8",
+                                borderRadius: 8,
+                                width: 28, height: 28,
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                cursor: "pointer",
+                                fontSize: 13,
+                                lineHeight: 1,
+                                transition: "background 0.2s, color 0.2s",
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.background = "rgba(239,68,68,0.15)"; e.currentTarget.style.color = "#f87171"; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#94a3b8"; }}
                         >
                             ✕
                         </button>
 
                         {/* TITLE */}
-                        <h3 className="text-white font-semibold mb-2">
+                        <h3 style={{
+                            color: "#f1f5f9",
+                            fontWeight: 700,
+                            fontSize: 16,
+                            letterSpacing: "0.01em",
+                            marginBottom: 6,
+                        }}>
                             Shift Details
                         </h3>
 
-                        {/* DATE */}
-                        <p className="text-indigo-400 text-sm mb-3">
-                            {selectedDate}
-                        </p>
+                        {/* DATE BADGE */}
+                        <div style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 6,
+                            background: "rgba(99,102,241,0.12)",
+                            border: "1px solid rgba(99,102,241,0.25)",
+                            borderRadius: 8,
+                            padding: "3px 10px",
+                            marginBottom: 20,
+                        }}>
+                            <span style={{ fontSize: 11, color: "#a5b4fc", letterSpacing: "0.05em", fontWeight: 500 }}>
+                                📅 {selectedDate}
+                            </span>
+                        </div>
 
                         {/* CONTENT */}
-                        <div className="space-y-2 max-h-[250px] overflow-auto">
-                            {selectedShifts.length > 0 ? (
-                                selectedShifts.map((s, i) => (
-                                    <div
-                                        key={i}
-                                        className="bg-white/5 p-2 rounded-lg text-sm"
-                                    >
-                                        <div className="text-white font-medium">
-                                            {s.type}
+                        <div style={{ maxHeight: 260, overflowY: "auto" }}>
+                            {form && form.shiftName ? (
+                                <div style={{
+                                    background: "rgba(255,255,255,0.04)",
+                                    border: "1px solid rgba(255,255,255,0.08)",
+                                    borderRadius: 12,
+                                    padding: "14px 16px",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: 8,
+                                }}>
+                                    {/* Shift type dot + name */}
+                                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                        <span style={{
+                                            width: 8, height: 8, borderRadius: "50%",
+                                            background: typeColors[form.shiftName] || "#6366f1",
+                                            flexShrink: 0,
+                                            boxShadow: `0 0 6px ${typeColors[form.shiftName] || "#6366f1"}`,
+                                        }} />
+                                        <span style={{ color: "#f1f5f9", fontWeight: 600, fontSize: 14 }}>
+                                            {form.shiftName}
+                                        </span>
+                                    </div>
+
+                                    {/* Divider */}
+                                    <div style={{ height: 1, background: "rgba(255,255,255,0.06)" }} />
+
+                                    {/* Times */}
+                                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                                        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                                            <span style={{ fontSize: 10, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.08em" }}>Start</span>
+                                            <span style={{ fontSize: 14, color: "#a5b4fc", fontWeight: 500 }}>{form.startTime}</span>
                                         </div>
-                                        <div className="text-xs text-slate-400">
-                                            {s.startTime} - {s.endTime}
+                                        <div style={{ color: "#334155", alignSelf: "center", fontSize: 18 }}>→</div>
+                                        <div style={{ display: "flex", flexDirection: "column", gap: 2, alignItems: "flex-end" }}>
+                                            <span style={{ fontSize: 10, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.08em" }}>End</span>
+                                            <span style={{ fontSize: 14, color: "#a5b4fc", fontWeight: 500 }}>{form.endTime}</span>
                                         </div>
                                     </div>
-                                ))
+                                </div>
                             ) : (
-                                <p className="text-slate-500 text-sm">
-                                    No shifts assigned
-                                </p>
+                                <div style={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    padding: "28px 0",
+                                    gap: 8,
+                                }}>
+                                    <span style={{ fontSize: 28, opacity: 0.3 }}>🗓️</span>
+                                    <span style={{ color: "#475569", fontSize: 13 }}>No shifts assigned</span>
+                                </div>
                             )}
                         </div>
                     </div>
