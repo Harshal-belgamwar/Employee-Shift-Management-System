@@ -45,10 +45,12 @@ public class AdminService {
     private final SlotChangeRepository slotChangeRepository;
     private final ShiftPreferenceRepository shiftPreferenceRepository;
     private final ScheduleService scheduleService;
+    private final TokenService tokenService;
+    private final UserService userService;
 
 
     @Autowired
-    public AdminService(EmployeeRepository employeeRepository, UsersRepository usersRepository, ModelMapper modelMapper, ShiftsRepository shiftsRepository, PasswordEncoder passwordEncoder, LeaveRequestRepository leaveRequestRepository, ShiftAllocationRepository shiftAllocationRepository, NotificationRepository notificationRepository, SlotChangeRepository slotChangeRepository, ShiftPreferenceRepository shiftPreferenceRepository, ScheduleService scheduleService) {
+    public AdminService(EmployeeRepository employeeRepository, UsersRepository usersRepository, ModelMapper modelMapper, ShiftsRepository shiftsRepository, PasswordEncoder passwordEncoder, LeaveRequestRepository leaveRequestRepository, ShiftAllocationRepository shiftAllocationRepository, NotificationRepository notificationRepository, SlotChangeRepository slotChangeRepository, ShiftPreferenceRepository shiftPreferenceRepository, ScheduleService scheduleService, TokenService tokenService, UserService userService) {
         this.employeeRepository = employeeRepository;
         this.usersRepository = usersRepository;
         this.modelMapper = modelMapper;
@@ -61,6 +63,8 @@ public class AdminService {
         this.slotChangeRepository = slotChangeRepository;
         this.shiftPreferenceRepository = shiftPreferenceRepository;
         this.scheduleService = scheduleService;
+        this.tokenService = tokenService;
+        this.userService = userService;
     }
 
 
@@ -535,7 +539,17 @@ public class AdminService {
         notification.setMessage("Leave request has been approved");
         notification.setUsername(viewRequest.getUsername());
 
+        ResponseEntity<Map<String, Object>> response = (ResponseEntity<Map<String, Object>>) userService.getMe();
+
+        Map<String, Object> resp = response.getBody();
+
+        String username = (String) resp.get("username");
+
+
+
         notificationRepository.save(notification);
+        tokenService.notifyUser(user.getUser_id(),"Leave Request","Leave request has been approved by "+ username);
+
 
         return ResponseEntity.ok(Map.of("message","sucessfully approved request!"));
 

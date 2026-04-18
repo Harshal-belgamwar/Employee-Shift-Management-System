@@ -81,7 +81,8 @@ public class UserController {
                     "message", "Login successful",
                     "token", jwt,
                     "username", customUserDetails.getUsername(),
-                    "role", customUserDetails.getAuthorities().iterator().next().getAuthority()
+                    "role", customUserDetails.getAuthorities().iterator().next().getAuthority(),
+                            "userId",customUserDetails.getUsers().getUser_id()
             ));
         } catch (BadCredentialsException ex) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
@@ -96,24 +97,25 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<?> getMe() {
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated() || auth.getPrincipal().equals("anonymousUser")) {
-            return ResponseEntity.status(401).body("Unauthorized");
-        }
-        String username = auth.getName();
-
-        String role = auth.getAuthorities()
-                .stream()
-                .findFirst()
-                .map(Object::toString)
-                .orElse("NO_ROLE");
-
-        return ResponseEntity.ok(
-                Map.of(
-                        "username", username,
-                        "role", role
-                )
-        );
+//        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+//        if (auth == null || !auth.isAuthenticated() || auth.getPrincipal().equals("anonymousUser")) {
+//            return ResponseEntity.status(401).body("Unauthorized");
+//        }
+//        String username = auth.getName();
+//
+//        String role = auth.getAuthorities()
+//                .stream()
+//                .findFirst()
+//                .map(Object::toString)
+//                .orElse("NO_ROLE");
+//
+//        return ResponseEntity.ok(
+//                Map.of(
+//                        "username", username,
+//                        "role", role
+//                )
+//        );
+        return userService.getMe();
     }
 
 

@@ -3,6 +3,8 @@ package project.employeeshiftmanagement.service;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -83,6 +85,31 @@ public class UserService  {
             throw new UserNotFound("User not found");
         }
 
+    }
+
+    public ResponseEntity<?> getMe(){
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || !auth.isAuthenticated() || auth.getPrincipal().equals("anonymousUser")) {
+                return ResponseEntity.status(401).body("Unauthorized");
+            }
+            String username = auth.getName();
+
+            String role = auth.getAuthorities()
+                    .stream()
+                    .findFirst()
+                    .map(Object::toString)
+                    .orElse("NO_ROLE");
+
+            Users user = usersRepository.findByUsername(username).orElseThrow(()->new UsernameNotFoundException("User not found"));
+
+
+            return ResponseEntity.ok(
+                    Map.of(
+                            "userId",user.getUser_id(),
+                            "username", username,
+                            "role", role
+                    )
+            );
     }
 
 
