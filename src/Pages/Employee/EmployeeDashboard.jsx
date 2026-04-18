@@ -9,6 +9,7 @@ import Profile from "./Profile/Profile";
 import ChangePassword from "./User/ChangePassword";
 import api from "../../utils/api";
 import { toast } from "react-toastify";
+import { requestFCMToken } from "../../Notification/requestFCMToken";
 
 function ShiftChangeModal({ onClose, userdata }) {
     const [form, setForm] = useState({ requestedShift: "", reason: "" });
@@ -191,6 +192,7 @@ export default function EmployeeDashboard() {
     const [openShiftChange, setOpenShiftChange] = useState(false);
     const [notifications, setNotifications] = useState([]);
     const [userdata, setUserData] = useState({
+        userId: "",
         username: "",
         role: ""
     });
@@ -252,6 +254,23 @@ export default function EmployeeDashboard() {
     useEffect(() => {
         fetchUser();
     }, []);
+
+    useEffect(() => {
+
+        const fetchToken = async () => {
+            try {
+                const token = await requestFCMToken();
+                await api.post("/auth/save-token", { "token": token, "userId": userdata.userId });
+
+            } catch (error) {
+                console.log(error);
+            }
+
+        }
+
+        fetchToken();
+
+    }, [userdata.userId]);
 
     useEffect(() => {
         fetchNotifications();
@@ -381,7 +400,7 @@ export default function EmployeeDashboard() {
                     <div className="section-card-header">
                         <h3>📅 Shift Calendar</h3>
                     </div>
-                    <Calendar shifts={shifts.filter((s) => s.employeeId === 2) } userData={userdata} />
+                    <Calendar shifts={shifts.filter((s) => s.employeeId === 2)} userData={userdata} />
                 </div>
 
 

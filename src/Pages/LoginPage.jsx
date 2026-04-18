@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../utils/api";
 import { toast } from "react-toastify";
+import { requestFCMToken } from "../Notification/requestFCMToken";
 
 export default function LoginPage() {
     const navigate = useNavigate();
@@ -12,7 +13,7 @@ export default function LoginPage() {
     const handleChange = (e) =>
         setForm({ ...form, [e.target.name]: e.target.value });
 
-    
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();

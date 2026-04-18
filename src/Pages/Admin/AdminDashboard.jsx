@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../../utils/api";
 import { toast } from "react-toastify";
 import { useEffect, useState } from "react";
+import { requestFCMToken } from "../../Notification/requestFCMToken";
 
 export default function AdminDashboard() {
 
@@ -11,41 +12,99 @@ export default function AdminDashboard() {
 
     const [data, setData] = useState({});
     const navigate = useNavigate();
+
     const [userdata, setUserData] = useState({
+        userId: "",
         username: "",
         role: ""
-    })
+    });
 
+
+
+    // -------------------------
+    // 1. Fetch user
+    // -------------------------
     const fetchUser = async () => {
         try {
             const resp = await api.get("/auth/me");
-            const data = resp.data;
-            if (data.role) {
-                data.role = data.role.substring(5).toLowerCase();
+            const user = resp.data;
+
+            if (user.role) {
+                user.role = user.role.substring(5).toLowerCase();
             }
-            setUserData(data);
+
+            setUserData(user);
+
+            console.log("USER API RESPONSE:", user);
 
         } catch (error) {
-            toast.error(error);
+            toast.error(error?.response?.data?.message || "Failed to load user");
         }
-    }
+    };
 
+    // -------------------------
+    // 2. Fetch dashboard data
+    // -------------------------
+    const fetchDashboardData = async () => {
+        try {
+            const res = await api.get("/admin/total-count");
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const res = await api.get("/admin/total-count");
-                if (res.data != null) {
-                    setData(res.data);
-                }
-            } catch (error) {
-                toast.error(error?.response?.data?.message || "Failed to load dashboard data");
+            if (res.data) {
+                setData(res.data);
             }
-        };
 
-        fetchData();
+        } catch (error) {
+            toast.error(error?.response?.data?.message || "Failed to load dashboard data");
+        }
+    };
+
+    // -------------------------
+    // 3. Save FCM token
+    // -------------------------
+    const saveFCMToken = async (user) => {
+        try {
+            console.log("USER READY FOR TOKEN:", user);
+
+            const token = await requestFCMToken();
+
+            console.log("FCM TOKEN:", token);
+
+            if (!token || !user?.userId) {
+                console.error("Missing token or userId");
+                return;
+            }
+
+            await api.post("/auth/save-token", {
+                token: token,
+                userId: user.userId
+            });
+
+            console.log("TOKEN SAVED SUCCESSFULLY");
+
+        } catch (error) {
+            console.log("FCM SAVE ERROR:", error.response?.data || error.message);
+        }
+    };
+
+    // -------------------------
+    // 4. Load initial data
+    // -------------------------
+    useEffect(() => {
         fetchUser();
+        fetchDashboardData();
     }, []);
+
+    // -------------------------
+    // 5. Run after user is loaded
+    // -------------------------
+    useEffect(() => {
+        if (userdata.userId) {
+            saveFCMToken(userdata);
+        }
+    }, [userdata.userId]);
+
+
+
 
     return (
         <div className="space-y-8">
