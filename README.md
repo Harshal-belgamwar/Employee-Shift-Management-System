@@ -220,7 +220,21 @@ Runs on: http://localhost:8080
 
 ## 📸 Screenshots
 
-(Add your UI screenshots here)
+
+### Admin Dashboard
+![Admin Dashboard](./public/ScreenShots/AdminDashboard.png)
+
+### Employee Dashboard
+![Employee Dashboard](./public/ScreenShots/EmployeeDashboard.png)
+
+### Profile
+![Profile](./public/ScreenShots/Profile.png)
+
+### Schedule Generated
+![Schedule](./public/ScreenShots/ScheduleGenerated.png)
+
+### Shift Change Request
+![Shift Change](./public/ScreenShots/shiftChangeRequest.png)
 
 ---
 
